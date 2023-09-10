@@ -1,11 +1,13 @@
-ARG GO_VERSION=1.20
-FROM golang:${GO_VERSION}-bullseye AS builder
+FROM golang:1.21-bullseye AS builder
 
-WORKDIR /go/src/plugin
+RUN apt-get update && apt-get install -y make ca-certificates gcc && update-ca-certificates
+
+WORKDIR /go/src/plugin/
+RUN go install golang.org/dl/gotip@latest
+RUN echo "y" | gotip download 525455
 
 COPY . .
-
-RUN make build
+RUN CGO_ENABLED=1 gotip build -buildmode=c-shared -o bin/out_gstdout.so
 
 
 FROM fluent/fluent-bit:2.1.8-debug AS base
